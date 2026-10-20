@@ -20,96 +20,86 @@
 %OUTPUTS:
 %x: the estimate of the root computed by the function
 % exit_flag: an integer indicating whether or not the solver succeeded (1 = succeeded)
-function [X, exit_flag, num_iter] = multi_newton_solver(fun,x_guess,solver_params)
-
-%unpack values from struct (if fields in struct have been set)
-    num_iter = 1;
-    dXmin = 1e-14;
-    if isfield(solver_params,'dxmin')
-        dXmin = solver_params.dxmin;
+function [X, exit_flag, num_iter] = multi_newton_solver(fun,X0,numerical_diff,dxmin,ftol,max_iter,dxmax)
+    arguments
+        fun (1,:) function_handle
+        X0 (:,1) double
+        numerical_diff (1,:) double = 1
+        dxmin (1,:) double = 10e-14;
+        ftol (1,:) double = 10e-14;
+        max_iter (1,:) double = 200;
+        dxmax (1,:) double = 10e5;
     end
 
-    ftol = 1e-14;
-    if isfield(solver_params,'ftol')
-        ftol = solver_params.ftol;
-    end
+    iter = 0;                  % set iteration variable
+    X = X0;
+    fun_count = 0;
 
-    max_iter = 200;
-    if isfield(solver_params,'max_iter')
-        max_iter = solver_params.max_iter;
-    end
-
-    dXmax = 1e8;
-    if isfield(solver_params,'dxmax')
-        dXmax = solver_params.dxmax;
-    end
-
-    numerical_diff = 1;
-    if isfield(solver_params,'numerical_diff')
-        numerical_diff = solver_params.numerical_diff;
-    end
-
-    X0 = x_guess;
-    
-    % newton iteration
+    % loop through newton's method until the root is found, or until
+    % the iteration maximum is hit
     for i = 1:max_iter
-        %[f, ~] = fun(X0);
-        
-        % if true, calculate and return fval, J, if false just fval
-        if numerical_diff
-            f = fun(X0);
-            J = approximate_jacobian(fun,X0);
-        else
-            [f, J] = fun(X0);
+
+        if numerical_diff == 0
+            [F,J] = fun(X);
+        else 
+            [J, num_evals] = approximate_jacobian(fun,X);
+            fun_count = fun_count + num_evals;
+            F = fun(X);
         end
 
+        fun_count = fun_count + 1;
+        X0 = X;   
+        dx = J\F;     
+        X = X0 - dx;               % otherwise continue computing
 
-        % terminate early if solution is sufficently correct
+        % check for a denominator of zero or zero determinant of J
+        if any(dxmax < abs(dx)) || det(J*J') < dxmin       
+            % disp("Zero denominator error, or oversized update step size.")
+            exit_flag = 0;              % if true: mark failure and exit
+            return                      % the program
+        end
+        
+        % success is based on whether the final value is 'close enough' to
+        % zero. set exit_flag correspondingly
+        % terminate early if:
+
+        % solution is sufficently correct (success)
         if norm(f) < ftol
-            %fprintf('ftol\n');
             X = X0;
             exit_flag = 1;
             return
         end
-        
-       
-        %J = approximate_jacobian(fun, X0);
-        % calc step
-        dX = -J\f;
-
-        % terminate if derivative/singular jacobian is zero, exit flag = 0 solver failed
+        % derivative/singular jacobian is zero (failure)
         if abs(det(J*J')) < ftol
             fprintf('det=0\n')
             exit_flag = 0;
             return
         end
-        
-        % terminate early if step dX is too large, solver fail,
+        % step dX is too large (failure)
         if norm(dX) > dXmax
             %dx = sign(dx)*dx_max;
             exit_flag = 0; 
             X = X0;
             return
         end
-        
+
         % update next step
         X1=X0+dX;
     
-        % terminate early if answer is barely changing
+        % terminate early if answer is barely changing (failure?)
+        % pretty sure this is a failure but it was a bit of a carry-over
+        % from bisection and secant method. maybe it indicates success on
+        % the newton solver. or maybe this is why Suwanee & co. weren't
+        % getting correct answers. Changing this to exit_flag = 0 but since
+        % they don't use a while loop it shouldn't change the output,
+        % unlike our code
         if norm(dX) <= dXmin
-            %fprintf('dxmin\n');
             X = X1;
-            exit_flag = 1;
+            exit_flag = 0;
             return
         end
-        
-        % next iteration
-        X0 = X1;
-        %hold on;
-        num_iter = num_iter+1;
-    end
-   X = X0;
-% exit_flag = 0;
-% fprintf('max_iter\n')
-    
+
+        % add one to the iteration
+        iter = iter+1;
+    end   
 end
