@@ -1,6 +1,6 @@
 %Rate function describing Newton's law of gravitation
 %INPUTS:
-%t: the current time
+%t: the current time?
 %V: the vector of the position and velocity of the planet
 %   V = [x_p; y_p; dxdt_p; dydt_p]
 %orbit_params: a struct describing the system parameters
@@ -10,6 +10,11 @@
 %OUTPUTS:
 %dVdt: a column vector describing the time derivative of V:
 %   dVdt = [dxdt_p; dydt_p; d2xdt2_p; d2ydt2_p]
-function dVdt = gravity_rate_func(t,V,orbit_params)
-    %your code here
+function dVdt = gravity_rate_func(t, V, orbit_params)
+    sun_mass = orbit_params.m_sun;
+    G = orbit_params.G;
+    s = [V(1); V(2)];
+    v = [V(3); V(4)];
+    a = -sun_mass*G*s / norm(s)^3;
+    dVdt = [v; a];
 end

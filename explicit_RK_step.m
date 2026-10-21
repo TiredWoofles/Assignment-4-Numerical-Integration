@@ -15,6 +15,23 @@
 % formula depends on the integration method used
 %num_evals: A count of the number of times that you called
 % rate_func_in when computing the next step
-function [XB, num_evals] = explicit_RK_step(rate_func_in,t,XA,h,BT_struct)
-%your code here
+function [XB, fun_count] = explicit_RK_step(rate_func_in,t,XA,h,BT_struct)
+    % unpack the Butcher tableau
+    A = BT_struct.A;
+    B = BT_struct.B;
+    C = BT_struct.C;
+    
+    % set up a vector to store K values
+    K = zeros(length(C), length(XA));
+    fun_count = 0;
+
+    % loop through tableau values
+    for i = 1:length(C)
+        K(i,:) = rate_func_in(t+C(i)*h, XA + h*(A(i,:)*K));
+        fun_count = fun_count + 1;
+    end
+
+    % calculate the next X value
+    XB = XA + h*(B*K);
+    % set the function count to 1
 end

@@ -23,10 +23,9 @@ function plot_global_truncation(step_func, var_test, rate_func, sol, t_span, num
         h = h_list(i);
         [~, x_list,~, iter] = step_func(rate_func, t_span, X0, h);  
         x_true = sol(t_span(end));              % calculate error
-        iter = iter+1
         error(i) = norm(x_list(end,:).' - x_true);
-        fun_count(i) = iter;      % save iterations
-        iter
+        fun_count(i) = iter;                    % save iterationsx
+        iter = iter + 1
     end
 
     log_error = log10(error(h_filter));
