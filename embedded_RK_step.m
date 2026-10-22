@@ -15,7 +15,7 @@
 %XB2: the approximate value for X(t+h) using the second row of the Tableau
 %num_evals: A count of the number of times that you called
 % rate_func_in when computing the next step
-function [XB1, XB2, fun_count] = RK_step_embedded(rate_func_in,t,XA,h,BT_struct)
+function [XB1, XB2, fun_count] = embedded_RK_step(rate_func_in,t,XA,h,BT_struct)
     A = BT_struct.A;
     B = BT_struct.B;
     C = BT_struct.C;
