@@ -1,14 +1,14 @@
 %Runs numerical integration arbitrary RK method
 %INPUTS:
 %rate_func_in: the function used to compute dXdt. rate_func_in will
-% have the form: dXdt = rate_func_in(t,X) (t is before X)
+%              have the form: dXdt = rate_func_in(t,X) (t is before X)
 %tspan: a two element vector [t_start,t_end] that denotes the integration endpoints
 %X0: the vector describing the initial conditions, X(t_start)
 %h_ref: the desired value of the average step size (not the actual value)
 %BT_struct: a struct that contains the Butcher tableau
-% BT_struct.A: matrix of a_{ij} values
-% BT_struct.B: vector of b_i values
-% BT_struct.C: vector of c_i values
+%           BT_struct.A: matrix of a_{ij} values
+%           BT_struct.B: vector of b_i values
+%           BT_struct.C: vector of c_i values
 %OUTPUTS:
 %t_list: the vector of times, [t_start;t_1;t_2;...;.t_end] that X is approximated at
 %X_list: the vector of X, [X0';X1';X2';...;(X_end)'] at each time step
@@ -45,6 +45,8 @@ function [t_list,X_list,h_avg, fun_count] = explicit_RK_fixed_step_integration .
         % solve the step function
         [XB, iter] = explicit_RK_step(rate_func_in,t,XA,h_avg,BT_struct);
     
+        % set the next list value as the solution, and add one to the
+        % function counter
         X_list(j+1,:) = XB;
         fun_count = fun_count + iter;
     end
