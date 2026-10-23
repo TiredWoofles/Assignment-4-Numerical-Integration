@@ -19,18 +19,9 @@ function plot_orbit_solution()
 
     % define parameters for the RK methods:
     % set the Butcher tableaus
-    BT_4o = struct();
-    BT_4o.A = [0 0 0 0; 0.5 0 0 0; 0 0.5 0 0; 0 0 1 0];
-    BT_4o.B = [1/6 1/3 1/3 1/6];
-    BT_4o.C = [0; 0.5; 0.5; 1];
-    BT_euler = struct();
-    BT_euler.A = [0];
-    BT_euler.B = [1];
-    BT_euler.C = [0];
-    BT_midpoint = struct();
-    BT_midpoint.A = [0 0; 0.5 0];
-    BT_midpoint.B = [0 1];
-    BT_midpoint.C = [0; 0.5];
+    BT_4o = init_BT("Fourth Order");
+    BT_euler = init_BT("Forward Euler");
+    BT_midpoint = init_BT("Explicit Midpoint");
     % set the reference timestep size, initial value, and time range
     h_ref = 1e-4;
     X0 = V_list(1,:);

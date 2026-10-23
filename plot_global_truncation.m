@@ -28,24 +28,10 @@ function error = plot_global_truncation(var_test, rate_func, sol, t_span, num_it
     orbit_params.m_planet = 1;
     orbit_params.G = 40;
 
-    % set Butcher tableaus
-    BT_4o = struct();
-    BT_4o.A = [0 0 0 0; 0.5 0 0 0; 0 0.5 0 0; 0 0 1 0];
-    BT_4o.B = [1/6 1/3 1/3 1/6];
-    BT_4o.C = [0; 0.5; 0.5; 1];
-    BT_euler = struct();
-    BT_euler.A = [0];
-    BT_euler.B = [1];
-    BT_euler.C = [0];
-    BT_midpoint = struct();
-    BT_midpoint.A = [0 0; 0.5 0];
-    BT_midpoint.B = [0 1];
-    BT_midpoint.C = [0; 0.5];
-
+    % set methods
     methods = ["Fourth Order", "Forward Euler", "Explicit Midpoint"];
     fit_color = [0.65 0 0; 0 0 0.65; 0 0.65 0];
     data_color = [1 0.5 0.5; 0.5 0.5 1; 0.5 1 0.5];
-    BT = [BT_4o, BT_euler, BT_midpoint];
 
     % set initial position and velocity
     x0 = 8;
@@ -71,7 +57,7 @@ function error = plot_global_truncation(var_test, rate_func, sol, t_span, num_it
 
     % Loop through the three RK methods
     for j = 1:length(methods)
-        BT_midpoint = BT(j);
+        BT_struct = init_BT(methods(j));
         error = zeros(num_iter,1);
         fun_count = zeros(num_iter,1);
 
@@ -80,7 +66,7 @@ function error = plot_global_truncation(var_test, rate_func, sol, t_span, num_it
         for i = 1:num_iter
             h = h_list(i);
             [~, x_list,~, fun_count] = explicit_RK_fixed_step_integration ...
-                (rate_func,t_span,X0,h,BT_midpoint);  
+                (rate_func,t_span,X0,h,BT_struct);  
             x_true = sol(t_span(end));              % calculate error
             error(i) = norm(x_list(end,:).' - x_true);
             fun_count(i) = iter;                    % save iterationsx
