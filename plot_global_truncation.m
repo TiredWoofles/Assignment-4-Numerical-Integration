@@ -1,28 +1,26 @@
 % Function to plot global truncation error against step size or function
 % count for various Runge-Kutta methods.
-%INPUTS:
+%INPUTS (all optional):
 % var_test: a string that calls function count or step size calculations;
 %           defaults to step size
-% rate_func: a function handle that defines 
-%V: the vector of the position and velocity of the planet
-%   V = [x_p; y_p; dxdt_p; dydt_p]
-%orbit_params: a struct describing the system parameters
-%   orbit_params.m_sun is the mass of the sun
-%   orbit_params.m_planet is the mass of the planet
-%   orbit_params.G is the gravitational constant
+% func: a function handle that defines a rate function to approximate
+% sol: a function handle that defines the solution of func
+% t_span: a two-value list containing the first and final values desired of
+%         the relevant time span
+% num_iter: the number of iterations/datapoints desired
 %OUTPUTS:
-%dVdt: a column vector describing the time derivative of V:
-%   dVdt = [dxdt_p; dydt_p; d2xdt2_p; d2ydt2_p]
-function error = plot_global_truncation(var_test, rate_func, sol, t_span, num_iter)
+% None
+function plot_global_truncation(var_test, func, sol, t_span, num_iter)
     arguments
         % error (:,1) double = 0
         var_test (1,:) string = "Step Size"
-        rate_func (1,:) function_handle = @gravity_rate_func
+        func (1,:) function_handle = @gravity_rate_func
         sol (1,:) function_handle = @compute_planetary_motion
         t_span (1,:) double = [0, 2*pi]
         num_iter (1,:) double = 50
     end
-    % set orbit parameters
+
+    % initialize orbit parameters
     orbit_params = struct();
     orbit_params.m_sun = 1;
     orbit_params.m_planet = 1;
@@ -41,22 +39,25 @@ function error = plot_global_truncation(var_test, rate_func, sol, t_span, num_it
     V0 = [x0;y0;dxdt0;dydt0];
     % create wrapper functions for the gravity function and the analytical
     % solution
-    rate_func = @(t, V) gravity_rate_func(t, V, orbit_params);
+    func = @(t, V) gravity_rate_func(t, V, orbit_params);
     sol = @(t) compute_planetary_motion(t, V0, orbit_params);
 
-    % set initial x guess, timestep size, and a filter based on the time
-    % step size (for calculating p)
+    % set initial x guess, timestep size, a filter based on the timestep
+    %  ize (for calculating p), and loop iterations
     X0 = sol(t_span(1));
     h_list = logspace(-5,1,num_iter);
     h_filter = h_list <= 1 & h_list >= 1e-3;
     log_h_list = log10(h_list(h_filter))';
-    iter = 0;
+    iter = 0
 
-    % set up the figure outside of the for loop & if-statements
+    % set up the figure outside of the for-loop & if-statements
+    clf
     figure(1)
 
     % Loop through the three RK methods
     for j = 1:length(methods)
+        % set up the Butcher tableau corresponding to the current method
+        % loop, as well as empty lists for storing data this loop
         BT_struct = init_BT(methods(j));
         error = zeros(num_iter,1);
         fun_count = zeros(num_iter,1);
@@ -65,26 +66,30 @@ function error = plot_global_truncation(var_test, rate_func, sol, t_span, num_it
         % errors for each one
         for i = 1:num_iter
             h = h_list(i);
-            [~, x_list,~, fun_count] = explicit_RK_fixed_step_integration ...
-                (rate_func,t_span,X0,h,BT_struct);  
-            x_true = sol(t_span(end));              % calculate error
+            [~, x_list,~, evals] = explicit_RK_fixed_step_integration ...
+                (func,t_span,X0,h,BT_struct);  
+            x_true = sol(t_span(end);
             error(i) = norm(x_list(end,:).' - x_true);
-            fun_count(i) = iter;                    % save iterationsx
-            iter = iter + 1
+            fun_count(i) = evals;
+            
+            % print iterations for troubleshooting
+            disp(iter = iter + evals)
         end
     
         % set error as a logs spread
         log_error = log10(error(h_filter));
     
-        % plot the graph depending on the value we're tracking
+        % Calculate p-value, plot a fit line, and plot data for a
+        % comparison of error and function count.
         if var_test == "Fun Count"
-            %%%%%% Fun Count P-values
             log_evals = log10(fun_count(h_filter));
             slope = polyfit(log_evals,log_error, 1);
             fit_line = 10.^polyval(slope, log10(h_list));
             p = slope(1)
     
             loglog(h_list, fit_line, '-', 'Linewidth', 7, 'Color', [0.5 1 0.5], 'Displayname',"Fit");
+            hold on;
+            grid on;
             loglog(fun_count, error, '.', 'MarkerSize',25, 'Color', [0.5 1 0.5],'Displayname',"RK");
             
             % plot styling
@@ -96,8 +101,9 @@ function error = plot_global_truncation(var_test, rate_func, sol, t_span, num_it
             fontsize(scale=1.5)
             axis([3 4e6 1e-10 1e5])
     
+        % Alternatively, calculate p-value, plot a fit line, and plot data 
+        % for a comparison of error and step size.
         elseif var_test == "Step Size"
-            %%%%%%% Step Size P-values
             slope = polyfit(log_h_list, log_error, 1);
             fit_line = 10.^polyval(slope, log10(h_list));
             p = slope(1)
