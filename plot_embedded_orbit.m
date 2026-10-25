@@ -9,12 +9,12 @@
 % num_iter: the number of iterations/datapoints desired
 %OUTPUTS:
 % None
-function plot_embedded_orbit(method, p, growth_limit)
+function plot_embedded_orbit(growth_limit, method, p)
     % set optional inputs
     arguments
+        growth_limit (1,:) double = 1.5   % any value from about 1.5 to 10
         method (1,:) string = "Heun Euler"
         p (1,:) double = 2 % corresponds to the lower order of an embedded method
-        growth_limit (1,:) double = 1.5   % any value from about 1.5 to 10
     end
 
     % define paramters for the analytical solution:
@@ -42,10 +42,10 @@ function plot_embedded_orbit(method, p, growth_limit)
     h_ref = 1e-2;
     BT_struct = init_BT(method);
     p = 2;
-    error_desired = 1e-4;
+    error_desired = 0.3;
     
     % compute the RK methods
-    [t_list,x_list,h_avg,fun_count] = explicit_RK_variable_step_integration( ...
+    [step_failure_rate, t_list,x_list,h_avg,fun_count] = explicit_RK_variable_step_integration( ...
         func,tspan,X0,h_ref,BT_struct,p,error_desired,growth_limit);
 
     % plot the orbit path around the sun

@@ -12,7 +12,6 @@
 % None
 function plot_global_truncation(var_test, func, sol, t_span, num_iter)
     arguments
-        % error (:,1) double = 0
         var_test (1,:) string = "Step Size"
         func (1,:) function_handle = @gravity_rate_func
         sol (1,:) function_handle = @compute_planetary_motion
@@ -43,7 +42,7 @@ function plot_global_truncation(var_test, func, sol, t_span, num_iter)
     sol = @(t) compute_planetary_motion(t, V0, orbit_params);
 
     % set initial x guess, timestep size, a filter based on the timestep
-    %  ize (for calculating p), and loop iterations
+    % size (for calculating p), and loop iterations
     X0 = sol(t_span(1));
     h_list = logspace(-5,1,num_iter);
     h_filter = h_list <= 1 & h_list >= 1e-3;
@@ -66,14 +65,14 @@ function plot_global_truncation(var_test, func, sol, t_span, num_iter)
         % errors for each one
         for i = 1:num_iter
             h = h_list(i);
-            [~, x_list,~, evals] = explicit_RK_fixed_step_integration ...
+            [~, ~, x_list,~, evals] = explicit_RK_fixed_step_integration ...
                 (func,t_span,X0,h,BT_struct);  
-            x_true = sol(t_span(end);
+            x_true = sol(t_span(end));
             error(i) = norm(x_list(end,:).' - x_true);
             fun_count(i) = evals;
             
             % print iterations for troubleshooting
-            disp(iter = iter + evals)
+            iter = iter + 1
         end
     
         % set error as a logs spread

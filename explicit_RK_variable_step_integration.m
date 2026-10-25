@@ -1,5 +1,7 @@
 % Runs numerical integration arbitrary RK method using variable time steps
 %INPUTS:
+% step_failure_rate: the amount of failed integrations/all integration
+% attempts
 % rate_func_in: the function used to compute dXdt. rate_func_in will
 %              have the form: dXdt = rate_func_in(t,X) (t is before X)
 % tspan: a two element vector [t_start,t_end] that denotes the integration endpoints
@@ -17,7 +19,7 @@
 % X_list: the vector of X, [X0';X1';X2';...;(X_end)'] at each time step
 % h_avg: the average step size
 % num_evals: total number of calls made to rate_func_in during the integration
-function [t_list,X_list,h_avg,fun_count] = explicit_RK_variable_step_integration ...
+function [step_failure_rate, t_list,X_list,h_avg,fun_count] = explicit_RK_variable_step_integration ...
 (func,tspan,X0,h_ref,BT_struct,p,error_desired,growth_limit)
     % initialize parameters
     t0 = tspan(1);
@@ -31,18 +33,21 @@ function [t_list,X_list,h_avg,fun_count] = explicit_RK_variable_step_integration
     t_list = t;
     X_list = X0;
     h_list = h;
+    fail_count = 0;
     
     % loop until we reach the final time value
     while t < tf
         % append the new x-value at every loop
         XA = X_list(end,:);
         % solve the step function
-        [XB, iter, h_next, redo] = explicit_RK_variable_step(func,t,XA,h, ...
+        [XB, evals, h_next, redo] = explicit_RK_variable_step(func,t,XA,h, ...
             BT_struct,p,error_desired,growth_limit);
     
         % if we don't have to redo, update the x-value and current time;
         % otherwise, continue attempting to solve for the same time value
-        if ~redo
+        if redo
+            fail_count = fail_count+1;
+        else
             X_list(end+1,:) = XB';
             % if updating the time would put us over the final time value,
             % set the next timestep to tf-t instead of h_next
@@ -54,11 +59,13 @@ function [t_list,X_list,h_avg,fun_count] = explicit_RK_variable_step_integration
         end
 
         % update the function call count, timestep size, and timestep
-        fun_count = fun_count + iter;
+        fun_count = fun_count + evals;
         h = h_next;
         h_list(end+1) = h;
     end
-    
+
     % calculate the average timestep size
     h_avg = mean(h_list);
+    % calculate the failure rate
+    step_failure_rate = fail_count/length(t_list)
 end
