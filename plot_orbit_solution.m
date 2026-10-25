@@ -1,6 +1,16 @@
 % Function to plot an orbit, comparing an analytical solution and three
 % Runge-Kutta methods.
-function plot_orbit_solution()
+%INPUTS (all optional):
+% method: An array of strings corresponding to the Butcher tableaus for the
+%         methods desired, in order.
+%OUTPUTS:
+% None
+function plot_orbit_solution(method)
+    % set optional inputs
+    arguments
+        method (1,:) string = ["Fourth Order", "Forward Euler", "Explicit Midpoint"]
+    end
+
     % define paramters for the analytical solution:
     % set the orbit mechanics
     orbit_params = struct();
@@ -19,9 +29,9 @@ function plot_orbit_solution()
 
     % define parameters for the RK methods:
     % set the Butcher tableaus
-    BT_4o = init_BT("Fourth Order");
-    BT_euler = init_BT("Forward Euler");
-    BT_midpoint = init_BT("Explicit Midpoint");
+    color = [0.5 1 0.5; 1 0.5 0.5; 0.5 0.5 1];
+    weight = [5, 4, 3];
+    style = ["-.","--",":"];
     % set the reference timestep size, initial value, and time range
     h_ref = 1e-4;
     X0 = V_list(1,:);
@@ -29,67 +39,71 @@ function plot_orbit_solution()
     % create a wrapper function
     rate_func_in = @(t,V) gravity_rate_func(t,V,orbit_params);
 
-    % compute the RK methods
-    [t_4o,fourth_order] = explicit_RK_fixed_step_integration(rate_func_in,tspan, ...
-        X0,h_ref,BT_4o);
-    [t_euler,euler] = explicit_RK_fixed_step_integration(rate_func_in,tspan, ...
-        X0,h_ref,BT_euler);
-    [t_midpoint,midpoint] = explicit_RK_fixed_step_integration(rate_func_in,tspan, ...
-        X0,h_ref,BT_midpoint);
+    for i = 1:length(method)
+        % on the first loop only, plot the analytical solution first and
+        % set up plot styling
+        if i == 1
+            clf
+            % plot the orbit onto figure 1
+            figure(1)
+            axis equal; axis square;
+            axis([-4, 10, -8, 6]);
+            hold on;
+            grid on;
+            plot(0,0,'ro','markerfacecolor',[1 0.65 0],'color',[1 0.65 0],'markersize',12,DisplayName="Sun");
+            plot(V_list(:,1),V_list(:,2),'k', LineWidth=4, DisplayName="Analytical Solution");
+            set(gca,"TickLabelInterpreter",'latex','FontSize',18);
+            title("Three Runge-Kutta Methods vs Analytical Solution", "Interpreter","Latex",'FontSize',24);
+            xlabel('$X$ Position (-)', 'Interpreter', 'Latex','FontSize',20);
+            ylabel('$Y$ Position (-)', 'Interpreter', 'Latex','FontSize',20);
+                 
+            % plot x-y value comparisons onto two figure 2 tiles
+            figure(2)
+            t = tiledlayout(2, 1, "tilespacing", "compact", "padding", "compact");
+            title(t,"Three Runge-Kutta Methods vs Analytical Solution","Interpreter","Latex",'FontSize',34);
+            
+            nexttile(1)
+            hold on;
+            grid on;
+            plot(t_range,V_list(:,1),'k', LineWidth=3);
+            set(gca,"TickLabelInterpreter",'latex','FontSize',14);
+            title("$X$-values vs Time", "Interpreter","Latex",'FontSize',18);
+            xlabel('Time (-)', 'Interpreter', 'Latex');
+            ylabel('$X$ Position (-)', 'Interpreter', 'Latex');
+            
+            nexttile(2)
+            hold on;
+            grid on;
+            plot(t_range,V_list(:,2),'k', LineWidth=3, DisplayName="Analytical Solution");
+            plot(0,0,'.w',DisplayName="")
+            set(gca,"TickLabelInterpreter",'latex','FontSize',14);
+            title("$Y$-values vs Time", "Interpreter","Latex",'FontSize',18);
+            xlabel('Time (-)', 'Interpreter', 'Latex');
+            ylabel('$Y$ Position (-)', 'Interpreter', 'Latex');
+        end
 
-    % plot the orbit path around the sun
-    figure(1)
-    axis equal; axis square;
-    axis([-4, 10, -8, 6]);
-    hold on;
-    grid on;
-    plot(0,0,'ro','markerfacecolor',[1 0.65 0],'color',[1 0.65 0],'markersize',12,DisplayName="Sun");
-    plot(V_list(:,1),V_list(:,2),'k', LineWidth=4, DisplayName="Analytical Solution");
-    plot(fourth_order(:,1),fourth_order(:,2),'-.',LineWidth=6,Color=[0.5 1 0.5],DisplayName='Fourth Order');
-    plot(euler(:,1),euler(:,2),'--',LineWidth=5,Color=[1 0.5 0.5],DisplayName='Forward Euler');
-    plot(midpoint(:,1),midpoint(:,2),':',LineWidth=4,Color=[0.5 0.5 1],DisplayName='Explicit Midpoint');
-    legend("location","eastoutside","interpreter","latex","Fontsize",16)
-    title("Three Runge-Kutta Methods vs Analytical Solution", "Interpreter","Latex",'FontSize',34);
-    xlabel('$X$ Position (-)', 'Interpreter', 'Latex','FontSize',32);
-    ylabel('$Y$ Position (-)', 'Interpreter', 'Latex','FontSize',32);
-    set(gca,"TickLabelInterpreter",'latex','FontSize',18);
+        BT_struct = init_BT(method(i));
+        % compute the RK methods
+        [t_list,x_list] = explicit_RK_fixed_step_integration(rate_func_in,tspan, ...
+            X0,h_ref,BT_struct);
 
-    % plot the x and y values for each time step
-    figure(2);
-    t = tiledlayout(2, 1, "tilespacing", "compact", "padding", "compact");
-    title(t,"Three Runge-Kutta Methods vs Analytical Solution","Interpreter","Latex",'FontSize',34);
+        % plot the orbit path around the sun
+        figure(1)
+        plot(x_list(:,1),x_list(:,2),style(i),LineWidth=weight(i),Color=color(i,:),DisplayName=sprintf("%s",method(i)));
+        legend("location","eastoutside","interpreter","latex","Fontsize",16)
 
-    % x-value plot:
-    nexttile();
-    hold on;
-    grid on;
-    plot(t_range,V_list(:,1),'k', LineWidth=3);
-    plot(t_4o,fourth_order(:,1),'-.',LineWidth=4,Color=[0.5 1 0.5]);
-    plot(t_euler,euler(:,1),'--',LineWidth=4,Color=[1 0.5 0.5]);
-    plot(t_midpoint,midpoint(:,1),':',LineWidth=3,Color=[0.5 0.5 1]);
-    set(gca,"TickLabelInterpreter",'latex','FontSize',14);
-    title("$X$-values vs Time", "Interpreter","Latex",'FontSize',18);
-    xlabel('Time (-)', 'Interpreter', 'Latex');
-    ylabel('$X$ Position (-)', 'Interpreter', 'Latex');
-
-    % y-value plot:
-    nexttile()
-    hold on;
-    grid on;
-    plot(t_range,V_list(:,2),'k', LineWidth=3, DisplayName='Analytical Solution');
-    plot(0,0,'.w',DisplayName="")
-    plot(t_4o,fourth_order(:,2),'-.',LineWidth=4,Color=[0.5 1 0.5],DisplayName='Fourth Order');
-    plot(0,0,'.w',DisplayName="")
-    plot(t_euler,euler(:,2),'--',LineWidth=4,Color=[1 0.5 0.5],DisplayName='Forward Euler');
-    plot(0,0,'.w',DisplayName="")
-    plot(t_midpoint,midpoint(:,2),':',LineWidth=3,Color=[0.5 0.5 1],DisplayName='Explicit Midpoint');
-    set(gca,"TickLabelInterpreter",'latex','FontSize',14);
-    title("$Y$-values vs Time", "Interpreter","Latex",'FontSize',18);
-    xlabel('Time (-)', 'Interpreter', 'Latex');
-    ylabel('$Y$ Position (-)', 'Interpreter', 'Latex');
-
-    my_legend = legend();
-    my_legend.Layout.Tile = 'south';
-    my_legend.ItemTokenSize(1) = 50;
-    set(my_legend,"interpreter","latex","Fontsize",16,'Orientation', 'Horizontal');
+        % plot the x and y values for each time step
+        figure(2);
+        % x-value plot:
+        nexttile(1);
+        plot(t_list,x_list(:,1),style(i),LineWidth=weight(i),Color=color(i,:));
+        % y-value plot:
+        nexttile(2)
+        plot(t_list,x_list(:,2),style(i),LineWidth=weight(i),Color=color(i,:),DisplayName=method(i));
+        plot(0,0,'.w',DisplayName="")
+        my_legend = legend();
+        my_legend.Layout.Tile = 'south';
+        my_legend.ItemTokenSize(1) = 50;
+        set(my_legend,"interpreter","latex","Fontsize",16,'Orientation', 'Horizontal');
+    end
 end
