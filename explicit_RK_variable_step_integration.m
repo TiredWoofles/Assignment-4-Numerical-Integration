@@ -19,7 +19,7 @@
 % X_list: the vector of X, [X0';X1';X2';...;(X_end)'] at each time step
 % h_avg: the average step size
 % num_evals: total number of calls made to rate_func_in during the integration
-function [step_failure_rate, t_list,X_list,h_avg,fun_count] = explicit_RK_variable_step_integration ...
+function [t_list,X_list,h_avg,fun_count,failure_rate] = explicit_RK_variable_step_integration ...
 (func,tspan,X0,h_ref,BT_struct,p,error_desired,growth_limit)
     % initialize parameters
     t0 = tspan(1);
@@ -67,5 +67,5 @@ function [step_failure_rate, t_list,X_list,h_avg,fun_count] = explicit_RK_variab
     % calculate the average timestep size
     h_avg = mean(h_list);
     % calculate the failure rate
-    step_failure_rate = fail_count/length(t_list)
+    failure_rate = fail_count/length(t_list);
 end
