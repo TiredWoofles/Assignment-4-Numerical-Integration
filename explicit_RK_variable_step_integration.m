@@ -22,18 +22,24 @@
 function [t_list,X_list,h_avg,fun_count,failure_rate] = explicit_RK_variable_step_integration ...
 (func,tspan,X0,h_ref,BT_struct,p,error_desired,growth_limit)
     % initialize parameters
-    t0 = tspan(1);
-    tf = tspan(2);
+    t0 = tspan(1); tf = tspan(2);
     t = t0;
     h = h_ref;
     fun_count = 0;
 
     % create empty lists for saving timesteps and X values
     % including the first value
-    t_list = t;
-    X_list = X0;
-    h_list = h;
+    t_list = [t];
+    X_list = [X0];
+    h_list = [h];
     fail_count = 0;
+
+    t_next = t+h;
+
+    if t_next>tf
+        t_next = tf;
+        h = tf-t;
+    end
     
     % loop until we reach the final time value
     while t < tf
@@ -49,23 +55,31 @@ function [t_list,X_list,h_avg,fun_count,failure_rate] = explicit_RK_variable_ste
             fail_count = fail_count+1;
         else
             X_list(end+1,:) = XB';
-            % if updating the time would put us over the final time value,
-            % set the next timestep to tf-t instead of h_next
-            if t + h_next > tf
-                h_next = tf - t;
-            end
-            t = t+h_next;
+            
+            % t = t+h_next;
+            t = t_next;
             t_list(end+1) = t;
+            h_list(end+1) = h;
         end
 
         % update the function call count, timestep size, and timestep
         fun_count = fun_count + evals;
         h = h_next;
-        h_list(end+1) = h;
+        t_next = t+h;
+
+        % if updating the time would put us over the final time value,
+        % set the next timestep to tf-t instead of h_next
+        if t_next > tf
+            t_next = tf;
+            h = tf-t;
+        end
+        
+        
     end
 
     % calculate the average timestep size
     h_avg = mean(h_list);
     % calculate the failure rate
     failure_rate = fail_count/length(t_list);
+
 end

@@ -11,7 +11,7 @@
 function plot_local_truncation(method, func, sol, t_ref, num_iter)
     % set optional inputs
     arguments
-        method (1,:) string = "Heun Euler"
+        method (1,:) string = "Fehlberg"
         func (1,:) function_handle = @rate_func01;
         sol (1,:) function_handle = @solution01;
         t_ref (1,:) double = 0.439

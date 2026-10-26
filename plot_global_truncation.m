@@ -26,9 +26,9 @@ function plot_global_truncation(var_test, func, sol, t_span, num_iter)
     orbit_params.G = 40;
 
     % set methods
-    methods = ["Fourth Order"];
-    fit_color = [0.65 0 0; 0 0 0.65; 0 0.65 0];
-    data_color = [1 0.5 0.5; 0.5 0.5 1; 0.5 1 0.5];
+    methods = ["Fehlberg"];
+    fit_color = [0.65 .25 0; 0 0 0.65; 0 0.65 0];
+    data_color = [1 .75 0.5; 0.5 0.5 1; 0.5 1 0.5];
 
     % set initial position and velocity
     x0 = 8;
@@ -103,14 +103,13 @@ function plot_global_truncation(var_test, func, sol, t_span, num_iter)
         % for a comparison of error and step size.
         elseif var_test == "Step Size"
             slope = polyfit(log_h_list, log_error, 1);
-            fit_line = 10.^polyval(slope, log10(h_list));
-            p = slope(1)
+            % fit_line = 10.^polyval(slope, log10(h_list));
+            p = slope(1);
     
-            loglog(h_list, fit_line, '-', 'Linewidth', 3, 'Color', fit_color(j,:), 'Displayname',sprintf("%s Fit Line",methods(j)));
+            % loglog(h_list, fit_line, '-', 'Linewidth', 3, 'Color', fit_color(j,:), 'Displayname',sprintf("%s Fit Line",methods(j)));
+            loglog(h_list, error, '.','MarkerSize',15, 'Color', data_color(j,:),'Displayname',sprintf("%s Data Points",methods(j)));
             hold on; % call hold on after calling loglog
             grid on;
-            loglog(h_list, error, '.','MarkerSize',15, 'Color', data_color(j,:),'Displayname',sprintf("%s Data Points",methods(j)));
-        
             % plot styling
             title('Global Truncation Error $\epsilon$ for Three RK Methods vs Timestep $h$', 'Interpreter', 'Latex', 'FontSize',18);
             legend('Location','northwest', 'Interpreter', 'Latex','FontSize',12);

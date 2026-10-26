@@ -31,7 +31,7 @@ function [XB, fun_count] = explicit_RK_step(rate_func_in,t,XA,h,BT_struct)
         % add one to the function counter
         fun_count = fun_count + 1;
     end
-
+    
     % calculate the next X value
     XB = XA + h*(B*K);
 end

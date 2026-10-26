@@ -29,15 +29,17 @@ function [XB, fun_count, h_next, redo] = explicit_RK_variable_step...
 
     % set h_next based on the error ratio and error scaling p, or the
     % growth limit
-    h_next = min(0.9*(error_desired/error).^(1/p),growth_limit)*h;
+    h_next = min(0.9*(error_desired/error)^(1/p),growth_limit)*h;
 
-    % depending on whether the error is more than the desired value, set
-    % a flag to redo the calculation
-    if error > error_desired
-        XB = XA;
-        redo = true;
-    else 
-        XB = XB1;
-        redo = false;
-    end
+    XB = XB1;
+    redo = error>error_desired;
+    % % depending on whether the error is more than the desired value, set
+    % % a flag to redo the calculation
+    % if error > error_desired
+    %     XB = XA;
+    %     redo = true;
+    % else 
+    %     XB = XB1;
+    %     redo = false;
+    % end
 end

@@ -12,9 +12,9 @@ function plot_embedded_global_truncation(h_ref, var_test, t_span, num_iter)
 %OUTPUTS:
 % None
     arguments
-        h_ref = 1e-2;
+        h_ref (1,:) double = 1e-2;
         var_test (1,:) string = "Step Size"
-        t_span (1,:) double = [0, 35]
+        t_span (1,:) double = [0, 60]
         num_iter (1,:) double = 50
     end
 
@@ -25,6 +25,8 @@ function plot_embedded_global_truncation(h_ref, var_test, t_span, num_iter)
     orbit_params.G = 40;
 
     % set methods
+    % methods = ["Fehlberg" "Heun Euler" "Bogacki"];
+    % methods = ["Fehlberg"];
     methods = ["Fehlberg"];
     fit_color = [0.65 0 0; 0 0 0.65; 0 0.65 0];
     data_color = [1 0.5 0.5; 0.5 0.5 1; 0.5 1 0.5];
@@ -43,18 +45,20 @@ function plot_embedded_global_truncation(h_ref, var_test, t_span, num_iter)
     % set initial x guess, timestep size, a filter based on the timestep
     % size (for calculating p), and loop iterations
     X0 = sol(t_span(1))';
-    e_list = logspace(-5,1,num_iter);
-    e_filter = e_list <= 1 & e_list >= 1e-3;
-    log_h_list = log10(e_list(e_filter))';
+    e_list = logspace(-13,-1,num_iter);
+    e_list = e_list(end:-1:1);
+    h_list = logspace(-5,1,num_iter);
+    h_filter = h_list <= 10 & h_list >= 1e-30;
+    log_h_list = log10(h_list(h_filter))';
     p = 5;
-    growth_limit = 3;
+    growth_limit = 8;
     iter = 0
 
-    % set up the figure outside of the for-loop & if-statements
-    figure(1)
+
 
     % Loop through the three RK methods
     for j = 1:length(methods)
+        iter = 0
         % set up the Butcher tableau corresponding to the current method
         % loop, as well as empty lists for storing data this loop
         BT_struct = init_BT(methods(j));
@@ -67,30 +71,34 @@ function plot_embedded_global_truncation(h_ref, var_test, t_span, num_iter)
         % errors for each one
         for i = 1:num_iter
             error_desired = e_list(i);
-            [~,x_list,h_avg,rate_func_count,failure_rate] = explicit_RK_variable_step_integration ...
+            [~,x_list,h_avg, evals,failure_rate] = explicit_RK_variable_step_integration ...
                 (func,t_span,X0,h_ref,BT_struct,p,error_desired,growth_limit);
-            x_true = sol(t_span(end));
+            x_true = sol(t_span(end))
+            
             error(i) = norm(x_list(end,:).' - x_true);
             h_avg_list(i) = h_avg;
-            fun_count(i) = rate_func_count;
+            fun_count(i) = evals;
             failure_list(i) = failure_rate;
             
             % print iterations for troubleshooting
-            iter = iter + 1
+            iter = iter + 1;
         end
     
         % set error as a logs spread
-        log_error = log10(error(e_filter));
+        log_error = log10(error(h_filter));
+
+        % set up the figure
+        figure(1)
     
         % Calculate p-value, plot a fit line, and plot data for a
         % comparison of error and function count.
         if var_test == "Fun Count"
-            log_evals = log10(fun_count(e_filter));
+            log_evals = log10(fun_count(h_filter));
             slope = polyfit(log_evals,log_error, 1);
-            fit_line = 10.^polyval(slope, log10(e_list));
+            fit_line = 10.^polyval(slope, log10(h_list));
             p = slope(1)
     
-            loglog(e_list, fit_line, '-', 'Linewidth', 7, 'Color', [0.5 1 0.5], 'Displayname',"Fit");
+            loglog(h_list, fit_line, '-', 'Linewidth', 7, 'Color', [0.5 1 0.5], 'Displayname',"Fit");
             hold on;
             grid on;
             loglog(fun_count, error, '.', 'MarkerSize',25, 'Color', [0.5 1 0.5],'Displayname',"RK");
@@ -108,22 +116,22 @@ function plot_embedded_global_truncation(h_ref, var_test, t_span, num_iter)
         % for a comparison of error and step size.
         elseif var_test == "Step Size"
             slope = polyfit(log_h_list, log_error, 1);
-            fit_line = 10.^polyval(slope, log10(e_list));
-            p = slope(1)
+            % fit_line = 10.^polyval(slope, log10(h_avg_list));
+            p = slope(1);
     
-            loglog(e_list, fit_line, '-', 'Linewidth', 3, 'Color', fit_color(j,:), 'Displayname',sprintf("%s Fit Line",methods(j)));
+            % loglog(h_avg_list, fit_line, '-', 'Linewidth', 3, 'Color', fit_color(j,:), 'Displayname',sprintf("%s Fit Line",methods(j)));
+            loglog(h_avg_list, error, '.','MarkerSize',15, 'Color', data_color(j,:),'Displayname',sprintf("%s Data Points",methods(j)));
             hold on; % call hold on after calling loglog
             grid on;
-            loglog(e_list, error, '.','MarkerSize',15, 'Color', data_color(j,:),'Displayname',sprintf("%s Data Points",methods(j)));
-        
+
             % plot styling
             title('Global Truncation Error $\epsilon$ for Three RK Methods vs Timestep $h$', 'Interpreter', 'Latex', 'FontSize',18);
-            legend('Location','northwest', 'Interpreter', 'Latex','FontSize',12);
-            xlabel("Step size $h$ (-)", 'Interpreter', 'Latex','FontSize',16);
+            legend('Location','southwest', 'Interpreter', 'Latex','FontSize',12);
+            xlabel("Average Step Size $h_{avg}$ (-)", 'Interpreter', 'Latex','FontSize',16);
             ylabel("Global Truncation Error $\epsilon$ (-)", 'Interpreter', 'Latex','FontSize',16);
             set(gca,"TickLabelInterpreter",'latex','FontSize',12);
             fontsize(scale=1.5)
-            axis([e_list(1) e_list(end) 1e-10 1e5])
+            % axis([h_avg_list(1) h_avg_list(end) 1e-10 1e5])
         end 
     end
 end

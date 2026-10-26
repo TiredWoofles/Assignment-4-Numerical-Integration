@@ -13,7 +13,7 @@ function plot_embedded_orbit(growth_limit, method, p)
     % set optional inputs
     arguments
         growth_limit (1,:) double = 1.5   % any value from about 1.5 to 10
-        method (1,:) string = "Heun Euler"
+        method (1,:) string = "Dormand Prince"
         p (1,:) double = 2 % corresponds to the lower order of an embedded method
     end
 

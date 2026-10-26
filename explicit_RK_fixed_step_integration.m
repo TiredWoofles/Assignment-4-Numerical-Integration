@@ -47,7 +47,7 @@ function [t_list,X_list,h_avg, fun_count] = explicit_RK_fixed_step_integration .
     
         % set the next list value as the solution, and add one to the
         % function counter
-        X_list(j+1,:) = XB;
+        X_list(j+1,:) = XB(end,:);
         fun_count = fun_count + iter;
     end
 end
