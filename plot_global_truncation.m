@@ -26,7 +26,7 @@ function plot_global_truncation(var_test, func, sol, t_span, num_iter)
     orbit_params.G = 40;
 
     % set methods
-    methods = ["Fourth Order", "Forward Euler", "Explicit Midpoint"];
+    methods = ["Fourth Order"];
     fit_color = [0.65 0 0; 0 0 0.65; 0 0.65 0];
     data_color = [1 0.5 0.5; 0.5 0.5 1; 0.5 1 0.5];
 
@@ -50,7 +50,6 @@ function plot_global_truncation(var_test, func, sol, t_span, num_iter)
     iter = 0
 
     % set up the figure outside of the for-loop & if-statements
-    clf
     figure(1)
 
     % Loop through the three RK methods
@@ -65,7 +64,7 @@ function plot_global_truncation(var_test, func, sol, t_span, num_iter)
         % errors for each one
         for i = 1:num_iter
             h = h_list(i);
-            [~, ~, x_list,~, evals] = explicit_RK_fixed_step_integration ...
+            [~, x_list,~, evals] = explicit_RK_fixed_step_integration ...
                 (func,t_span,X0,h,BT_struct);  
             x_true = sol(t_span(end));
             error(i) = norm(x_list(end,:).' - x_true);
