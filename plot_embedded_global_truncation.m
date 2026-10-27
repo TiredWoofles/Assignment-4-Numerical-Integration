@@ -1,6 +1,6 @@
-function plot_embedded_global_truncation(h_ref, var_test, t_span, num_iter)
+function plot_embedded_global_truncation(var_test, t_span, num_iter, h_ref)
 % Function to plot global truncation error against step size or function
-% count for various Runge-Kutta methods.
+% count for various Runge-Kutta method.
 %INPUTS (all optional):
 % var_test: a string that calls function count or step size calculations;
 %           defaults to step size
@@ -12,10 +12,10 @@ function plot_embedded_global_truncation(h_ref, var_test, t_span, num_iter)
 %OUTPUTS:
 % None
     arguments
-        h_ref (1,:) double = 1e-2;
         var_test (1,:) string = "Step Size"
-        t_span (1,:) double = [0, 60]
+        t_span (1,:) double = [0, 30]
         num_iter (1,:) double = 50
+        h_ref (1,:) double = 1e-2;
     end
 
     % initialize orbit parameters
@@ -24,11 +24,8 @@ function plot_embedded_global_truncation(h_ref, var_test, t_span, num_iter)
     orbit_params.m_planet = 1;
     orbit_params.G = 40;
 
-    % set methods
-    % methods = ["Fehlberg" "Heun Euler" "Bogacki"];
-    % methods = ["Fehlberg"];
-    methods = ["Fehlberg"];
-    fit_color = [0.65 0 0; 0 0 0.65; 0 0.65 0];
+    % set method
+    method = ["Fehlberg"];
     data_color = [1 0.5 0.5; 0.5 0.5 1; 0.5 1 0.5];
 
     % set initial position and velocity
@@ -50,18 +47,16 @@ function plot_embedded_global_truncation(h_ref, var_test, t_span, num_iter)
     h_list = logspace(-5,1,num_iter);
     h_filter = h_list <= 10 & h_list >= 1e-30;
     log_h_list = log10(h_list(h_filter))';
-    p = 5;
     growth_limit = 8;
-    iter = 0
 
 
 
-    % Loop through the three RK methods
-    for j = 1:length(methods)
+    % Loop through the three RK method
+    for j = 1:length(method)
         iter = 0
         % set up the Butcher tableau corresponding to the current method
         % loop, as well as empty lists for storing data this loop
-        BT_struct = init_BT(methods(j));
+        [BT_struct,p] = init_BT(method(j));
         error = zeros(num_iter,1);
         fun_count = zeros(num_iter,1);
         failure_list = zeros(num_iter,1);
@@ -73,7 +68,7 @@ function plot_embedded_global_truncation(h_ref, var_test, t_span, num_iter)
             error_desired = e_list(i);
             [~,x_list,h_avg, evals,failure_rate] = explicit_RK_variable_step_integration ...
                 (func,t_span,X0,h_ref,BT_struct,p,error_desired,growth_limit);
-            x_true = sol(t_span(end))
+            x_true = sol(t_span(end));
             
             error(i) = norm(x_list(end,:).' - x_true);
             h_avg_list(i) = h_avg;
@@ -81,7 +76,7 @@ function plot_embedded_global_truncation(h_ref, var_test, t_span, num_iter)
             failure_list(i) = failure_rate;
             
             % print iterations for troubleshooting
-            iter = iter + 1;
+            iter = iter + 1
         end
     
         % set error as a logs spread
@@ -98,13 +93,13 @@ function plot_embedded_global_truncation(h_ref, var_test, t_span, num_iter)
             fit_line = 10.^polyval(slope, log10(h_list));
             p = slope(1)
     
-            loglog(h_list, fit_line, '-', 'Linewidth', 7, 'Color', [0.5 1 0.5], 'Displayname',"Fit");
+            % loglog(h_list, fit_line, '-', 'Linewidth', 7, 'Color', [0.5 1 0.5], 'Displayname',"Fit");
+            loglog(fun_count, error, '.', 'MarkerSize',25, 'Color',data_color(j,:),'Displayname',sprintf("%s Data Points",method(j)));
             hold on;
             grid on;
-            loglog(fun_count, error, '.', 'MarkerSize',25, 'Color', [0.5 1 0.5],'Displayname',"RK");
             
             % plot styling
-            title('Global Truncation Error $\epsilon$ for RK Methods vs Efficiency', 'Interpreter', 'Latex', 'FontSize',18);
+            title('Global Truncation Error $\epsilon$ for RK method vs Efficiency', 'Interpreter', 'Latex', 'FontSize',18);
             legend('Location','northeast', 'Interpreter', 'Latex','FontSize',12);
             xlabel("Number of Rate Function Calls (-)", 'Interpreter', 'Latex','FontSize',16);
             ylabel("Global Truncation Error $\epsilon$ (-)", 'Interpreter', 'Latex','FontSize',16);
@@ -119,14 +114,13 @@ function plot_embedded_global_truncation(h_ref, var_test, t_span, num_iter)
             % fit_line = 10.^polyval(slope, log10(h_avg_list));
             p = slope(1);
     
-            % loglog(h_avg_list, fit_line, '-', 'Linewidth', 3, 'Color', fit_color(j,:), 'Displayname',sprintf("%s Fit Line",methods(j)));
-            loglog(h_avg_list, error, '.','MarkerSize',15, 'Color', data_color(j,:),'Displayname',sprintf("%s Data Points",methods(j)));
+            loglog(h_avg_list, error, '.','MarkerSize',15, 'Color', data_color(j,:),'Displayname',sprintf("Variable Step %s Method",method(j)));
             hold on; % call hold on after calling loglog
             grid on;
 
             % plot styling
-            title('Global Truncation Error $\epsilon$ for Three RK Methods vs Timestep $h$', 'Interpreter', 'Latex', 'FontSize',18);
-            legend('Location','southwest', 'Interpreter', 'Latex','FontSize',12);
+            title('Runge-Kutta Global Truncation Error $\epsilon$ vs Timestep $h$', 'Interpreter', 'Latex', 'FontSize',18);
+            legend('Location','northwest', 'Interpreter', 'Latex','FontSize',12);
             xlabel("Average Step Size $h_{avg}$ (-)", 'Interpreter', 'Latex','FontSize',16);
             ylabel("Global Truncation Error $\epsilon$ (-)", 'Interpreter', 'Latex','FontSize',16);
             set(gca,"TickLabelInterpreter",'latex','FontSize',12);

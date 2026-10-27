@@ -10,12 +10,13 @@
 % num_iter: the number of iterations/datapoints desired
 %OUTPUTS:
 % None
-function plot_global_truncation(var_test, func, sol, t_span, num_iter)
+function plot_global_truncation(fit,var_test, func, sol, t_span, num_iter)
     arguments
-        var_test (1,:) string = "Step Size"
+        fit (1,:) double = 0
+        var_test (1,:) string = "Fun Count"
         func (1,:) function_handle = @gravity_rate_func
         sol (1,:) function_handle = @compute_planetary_motion
-        t_span (1,:) double = [0, 2*pi]
+        t_span (1,:) double = [0, 30]
         num_iter (1,:) double = 50
     end
 
@@ -26,9 +27,9 @@ function plot_global_truncation(var_test, func, sol, t_span, num_iter)
     orbit_params.G = 40;
 
     % set methods
-    methods = ["Fehlberg"];
-    fit_color = [0.65 .25 0; 0 0 0.65; 0 0.65 0];
-    data_color = [1 .75 0.5; 0.5 0.5 1; 0.5 1 0.5];
+    method = ["Fehlberg"];
+    fit_color = [0.65 .25 0; 0.25 0 0.65; 0.25 0.65 0];
+    data_color = [1 .75 0.5; 0.75 0 1; 0.75 1 0.5];
 
     % set initial position and velocity
     x0 = 8;
@@ -53,10 +54,10 @@ function plot_global_truncation(var_test, func, sol, t_span, num_iter)
     figure(1)
 
     % Loop through the three RK methods
-    for j = 1:length(methods)
+    for j = 1:length(method)
         % set up the Butcher tableau corresponding to the current method
         % loop, as well as empty lists for storing data this loop
-        BT_struct = init_BT(methods(j));
+        BT_struct = init_BT(method(j));
         error = zeros(num_iter,1);
         fun_count = zeros(num_iter,1);
 
@@ -82,16 +83,22 @@ function plot_global_truncation(var_test, func, sol, t_span, num_iter)
         if var_test == "Fun Count"
             log_evals = log10(fun_count(h_filter));
             slope = polyfit(log_evals,log_error, 1);
-            fit_line = 10.^polyval(slope, log10(h_list));
             p = slope(1)
     
-            loglog(h_list, fit_line, '-', 'Linewidth', 7, 'Color', [0.5 1 0.5], 'Displayname',"Fit");
-            hold on;
-            grid on;
-            loglog(fun_count, error, '.', 'MarkerSize',25, 'Color', [0.5 1 0.5],'Displayname',"RK");
+            if fit
+                fit_line = 10.^polyval(slope, log10(h_list));
+                loglog(h_list, fit_line, '-', 'Linewidth', 7, 'Color', fit_color(j,:), 'Displayname',sprintf("%s Fit",method));
+                hold on;
+                grid on;
+                loglog(fun_count, error, '.', 'MarkerSize',25, 'Color', data_color(j,:),'Displayname',sprintf("%s Data",method));
+            else
+                loglog(fun_count, error, '.', 'MarkerSize',25, 'Color', data_color(j,:),'Displayname',sprintf("Fixed Step %s Method",method));
+                hold on;
+                grid on;
+            end
             
             % plot styling
-            title('Global Truncation Error $\epsilon$ for RK Methods vs Efficiency', 'Interpreter', 'Latex', 'FontSize',18);
+            title('Global Truncation Error $\epsilon$ for RK  vs Efficiency', 'Interpreter', 'Latex', 'FontSize',18);
             legend('Location','northeast', 'Interpreter', 'Latex','FontSize',12);
             xlabel("Number of Rate Function Calls (-)", 'Interpreter', 'Latex','FontSize',16);
             ylabel("Global Truncation Error $\epsilon$ (-)", 'Interpreter', 'Latex','FontSize',16);
@@ -106,8 +113,7 @@ function plot_global_truncation(var_test, func, sol, t_span, num_iter)
             % fit_line = 10.^polyval(slope, log10(h_list));
             p = slope(1);
     
-            % loglog(h_list, fit_line, '-', 'Linewidth', 3, 'Color', fit_color(j,:), 'Displayname',sprintf("%s Fit Line",methods(j)));
-            loglog(h_list, error, '.','MarkerSize',15, 'Color', data_color(j,:),'Displayname',sprintf("%s Data Points",methods(j)));
+            loglog(h_list, error, '.','MarkerSize',15, 'Color', data_color(j,:),'Displayname',sprintf("Fixed Step %s Method",method(j)));
             hold on; % call hold on after calling loglog
             grid on;
             % plot styling
@@ -117,7 +123,7 @@ function plot_global_truncation(var_test, func, sol, t_span, num_iter)
             ylabel("Global Truncation Error $\epsilon$ (-)", 'Interpreter', 'Latex','FontSize',16);
             set(gca,"TickLabelInterpreter",'latex','FontSize',12);
             fontsize(scale=1.5)
-            axis([h_list(1) h_list(end) 1e-10 1e5])
+            axis([h_list(1) h_list(end) 1e-12 1e3])
         end 
     end
 end

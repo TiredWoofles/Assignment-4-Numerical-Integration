@@ -33,5 +33,5 @@ function [XB, fun_count] = explicit_RK_step(rate_func_in,t,XA,h,BT_struct)
     end
     
     % calculate the next X value
-    XB = XA + h*(B*K);
+    XB = XA + h*(B(1,:)*K);
 end

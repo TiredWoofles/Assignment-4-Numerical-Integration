@@ -31,7 +31,7 @@ function [t_list,X_list,h_avg,fun_count,failure_rate] = explicit_RK_variable_ste
     % including the first value
     t_list = [t];
     X_list = [X0];
-    h_list = [h];
+    h_list = [];
     fail_count = 0;
 
     t_next = t+h;
@@ -54,9 +54,7 @@ function [t_list,X_list,h_avg,fun_count,failure_rate] = explicit_RK_variable_ste
         if redo
             fail_count = fail_count+1;
         else
-            X_list(end+1,:) = XB';
-            
-            % t = t+h_next;
+            X_list(end+1,:) = XB';            
             t = t_next;
             t_list(end+1) = t;
             h_list(end+1) = h;
@@ -68,7 +66,7 @@ function [t_list,X_list,h_avg,fun_count,failure_rate] = explicit_RK_variable_ste
         t_next = t+h;
 
         % if updating the time would put us over the final time value,
-        % set the next timestep to tf-t instead of h_next
+        % set the next time step to tf-t instead of h_next
         if t_next > tf
             t_next = tf;
             h = tf-t;
@@ -79,6 +77,7 @@ function [t_list,X_list,h_avg,fun_count,failure_rate] = explicit_RK_variable_ste
 
     % calculate the average timestep size
     h_avg = mean(h_list);
+
     % calculate the failure rate
     failure_rate = fail_count/length(t_list);
 

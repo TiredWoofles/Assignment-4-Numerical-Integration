@@ -25,7 +25,7 @@ function [t_list,X_list,h_avg, fun_count] = explicit_RK_fixed_step_integration .
     while (tf-t0)/N >= h_ref
         N = N+1;
     end 
-
+    
     % calculate the largest h value that will be an even fraction of the
     % time span
     h_avg = (tf-t0)/N;
@@ -47,7 +47,7 @@ function [t_list,X_list,h_avg, fun_count] = explicit_RK_fixed_step_integration .
     
         % set the next list value as the solution, and add one to the
         % function counter
-        X_list(j+1,:) = XB(end,:);
+        X_list(j+1,:) = XB;
         fun_count = fun_count + iter;
     end
 end
