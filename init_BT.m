@@ -23,6 +23,23 @@ function [tableau, p, filter] = init_BT(name)
         tableau.B = [0 1];
         tableau.C = [0; 0.5];
         p = 2;
+    elseif name == "Ralston's Method"
+        tableau.A = [0 0; 2/3 0];
+        tableau.B = [1/4 3/4];
+        tableau.C = [0; 2/3];
+        p = 2;
+    elseif name == "Kutta's third order method"
+        tableau.A = [0 0 0; 1/3 0 0; 0 2/3 0];
+        tableau.B = [1/4 0 3/4];
+        tableau.C = [0; 1/3; 2/3];
+        p = 3;
+
+    elseif name == "Ver der Houwen's Wray's third-order method"
+        tableau.A = [0 0 0; 8/15 0 0; 1/4 5/12 0];
+        tableau.B = [1/4 0 3/4];
+        tableau.C = [0; 8/15; 2/3];
+        p = 3;
+
     elseif name == "Dormand Prince"
         tableau.C = [0, 1/5, 3/10, 4/5, 8/9, 1, 1];
         tableau.B = [35/384, 0, 500/1113, 125/192, -2187/6784, 11/84, 0;...
