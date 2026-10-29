@@ -12,7 +12,7 @@ function V_list = compute_planet_wrapper(t)
     orbit_params.G = 40;
 
     % set initial position and velocity
-    x0 = 8;
+    x0 = 10;
     y0 = 0;
     dxdt0 = 0;
     dydt0 = 1.5;

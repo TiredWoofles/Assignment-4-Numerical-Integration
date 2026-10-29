@@ -10,44 +10,26 @@
 % num_iter: the number of iterations/datapoints desired
 %OUTPUTS:
 % None
-function error = plot_global_truncation(run, error, var_test, func, sol, t_span, num_iter)
+function error = plot_global_truncation(run, var_test, error, func, sol, t_span, num_iter)
     arguments
         run (1,:) double = 1
-        error (1,:) double = 0
         var_test (1,:) string = "Fun Count"
+        error (1,:) double = 0
         func (1,:) function_handle = @gravity_wrapper
-        sol (1,:) function_handle = @compute_planetary_motion
+        sol (1,:) function_handle = @compute_planet_wrapper
         t_span (1,:) double = [0, 30]
         num_iter (1,:) double = 50
     end
 
-    % initialize orbit parameters
-    orbit_params = struct();
-    orbit_params.m_sun = 1;
-    orbit_params.m_planet = 1;
-    orbit_params.G = 40;
-
     % set methods
     method = ["Fehlberg"];
-    data_color = [0.65 .25 0; 0.25 0 0.65; 0.25 0.65 0];
-    fit_color = [1 .65 0.35; 0.65 0.35 1; 0.75 1 0];
-
-    % set initial position and velocity
-    x0 = 8;
-    y0 = 0;
-    dxdt0 = 0;
-    dydt0 = 1.5;
-    V0 = [x0;y0;dxdt0;dydt0];
-    % create wrapper functions for the gravity function and the analytical
-    % solution
-    sol = @(t) compute_planetary_motion(t, V0, orbit_params);
+    data_color = [0.65 .25 .10; 0.25 0 0.65; 0.25 0.65 0];
+    fit_color = [1 .75 0.55; 0.65 0.35 1; 0.75 1 0];
 
     % set initial x guess, timestep size, a filter based on the timestep
     % size (for calculating p), and loop iterations
     X0 = sol(t_span(1));
     h_list = logspace(-5,1,num_iter);
-    h_filter = h_list <= 1 & h_list >= 1e-3;
-    log_h_list = log10(h_list(h_filter))';
     iter = 0
 
     % set up the figure outside of the for-loop & if-statements
@@ -55,10 +37,11 @@ function error = plot_global_truncation(run, error, var_test, func, sol, t_span,
 
     % Loop through the three RK methods
     for j = 1:length(method)
+        % set up the Butcher tableau corresponding to the curernt method: 
+        % BT and filter boundaries
+        [BT_struct,~,bounds] = init_BT(method(j),var_test);
         if run
-            % set up the Butcher tableau corresponding to the current method
-            % loop, as well as empty lists for storing data this loop
-            BT_struct = init_BT(method(j));
+            % set up empty lists for storing data this loop
             error = zeros(num_iter,1);
             fun_count = zeros(num_iter,1);
     
@@ -76,14 +59,18 @@ function error = plot_global_truncation(run, error, var_test, func, sol, t_span,
                 iter = iter + 1
             end
         end
-    
+
+        % filter the list of time steps and the list of errors, for
+        % calculating a fit line. set both as a log spread
+        filter = h_list >= bounds(1) & h_list <= bounds(2);
+        log_h_list = log10(h_list(filter));
         % set error as a log spread
-        log_error = log10(error(h_filter));
+        log_error = log10(error(filter));
     
         % Calculate p-value, plot a fit line, and plot data for a
         % comparison of error and function count.
         if var_test == "Fun Count"
-            log_evals = log10(fun_count(h_filter));
+            log_evals = log10(fun_count(filter));
             slope = polyfit(log_evals,log_error, 1);
             p = slope(1)
     
@@ -111,7 +98,7 @@ function error = plot_global_truncation(run, error, var_test, func, sol, t_span,
     
             loglog(h_list, fit_line, '-', 'Linewidth', 7, 'Color', fit_color(j,:), 'Displayname',sprintf("Fixed Step %s Fit",method));
             hold on; % call hold on after calling loglog
-            loglog(h_list, error, '.','MarkerSize',20, 'Color', data_color(j,:),'Displayname',sprintf("Fixed Step %s Data",method(j)));
+            loglog(h_list, error, '.','MarkerSize',25, 'Color', data_color(j,:),'Displayname',sprintf("Fixed Step %s Data",method(j)));
             grid on;
 
             % plot styling

@@ -6,8 +6,10 @@
 %OUTPUTS:
 %tableau: a struct containing the A, B, and C values for the requested
 %         Butcher Tableau
-function [tableau, p, filter] = init_BT(name)
+function [tableau, p, filter] = init_BT(name, var_test)
     tableau = struct();
+
+    % fixed-step (non-embedded/non adaptive) BTs:
     if name == "Fourth Order"
         tableau.A = [0 0 0 0; 0.5 0 0 0; 0 0.5 0 0; 0 0 1 0];
         tableau.B = [1/6 1/3 1/3 1/6];
@@ -33,13 +35,13 @@ function [tableau, p, filter] = init_BT(name)
         tableau.B = [1/4 0 3/4];
         tableau.C = [0; 1/3; 2/3];
         p = 3;
-
     elseif name == "Ver der Houwen's Wray's third-order method"
         tableau.A = [0 0 0; 8/15 0 0; 1/4 5/12 0];
         tableau.B = [1/4 0 3/4];
         tableau.C = [0; 8/15; 2/3];
         p = 3;
 
+    % embedded methods:
     elseif name == "Dormand Prince"
         tableau.C = [0, 1/5, 3/10, 4/5, 8/9, 1, 1];
         tableau.B = [35/384, 0, 500/1113, 125/192, -2187/6784, 11/84, 0;...
@@ -52,6 +54,11 @@ function [tableau, p, filter] = init_BT(name)
                 9017/3168, -355/33, 46732/5247, 49/176, -5103/18656, 0,0;...
                 35/384, 0, 500/1113, 125/192, -2187/6784, 11/84,0];
         p = 4;
+        if var_test == "Step Size"
+            filter = [1e-2, 1e-1];
+        elseif var_test == "Fun Count"
+            filter = [1e3, 1e4];
+        end
     elseif name == "Fehlberg"
         tableau.C = [0, 1/4, 3/8, 12/13, 1, 1/2];
         tableau.B = [16/135, 0, 6656/12825, 28561/56430, -9/50, 2/55;...
@@ -63,21 +70,41 @@ function [tableau, p, filter] = init_BT(name)
                     439/216, -8, 3680/513, -845/4104, 0,0;...
                     -8/27, 2, -3544/2565, 1859/4104, -11/40, 0];
         p = 4;
+        if var_test == "Step Size"
+            filter = [1e-1, 1e0];
+        elseif var_test == "Fun Count"
+            filter = [1e3, 1e4];
+        end
     elseif name == "Heun Euler"
         tableau.C = [0,1];
         tableau.B = [1/2,1/2;1,0];
         tableau.A = [0,0;1,0];
         p = 1;
+        if var_test == "Step Size"
+            filter = [1e-2, 1e-1];
+        elseif var_test == "Fun Count"
+            filter = [1e3, 1e4];
+        end
     elseif name == "Fehlberg RK1"
         tableau.C = [0,1/2,1];
         tableau.B = [1/512, 255/256, 1/512; 1/256, 255/256, 0];
         tableau.A = [0,0,0;1/2,0,0;1/256,255/256,0];
         p = 1;
+        if var_test == "Step Size"
+            filter = [1e-2, 1e-1];
+        elseif var_test == "Fun Count"
+            filter = [1e3, 1e4];
+        end
     elseif name == "Bogacki"
         tableau.C = [0,1/2, 3/4, 1];
         tableau.B = [2/9, 1/3, 4/9, 0; 7/24, 1/4, 1/3, 1/8];
         tableau.A = [0,0,0,0; 1/2,0,0,0; 0,3/4,0,0; 2/9,1/3, 4/9, 0];
         p = 2;
+        if var_test == "Step Size"
+            filter = [1e-2, 1e-1];
+        elseif var_test == "Fun Count"
+            filter = [1e3, 1e4];
+        end
     else
         disp("Not a valid method name.")
     end
