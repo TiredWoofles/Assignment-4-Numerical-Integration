@@ -26,7 +26,8 @@ function plot_embedded_global_truncation(var_test, t_span, num_iter, h_ref)
 
     % set method
     method = ["Fehlberg"];
-    data_color = [1 0.5 0.5; 0.5 0.5 1; 0.5 1 0.5];
+    data_color = [0.65 .25 0; 0.25 0.25 0.65; 0.25 0.65 0];
+    fit_color = [1 0.5 0.5; 0.65 0.65 1; 0.6 1 0.6];
 
     % set initial position and velocity
     x0 = 10;
@@ -36,24 +37,21 @@ function plot_embedded_global_truncation(var_test, t_span, num_iter, h_ref)
     V0 = [x0;y0;dxdt0;dydt0];
     % create wrapper functions for the gravity function and the analytical
     % solution
-    func = @(t, V) gravity_rate_func(t, V, orbit_params);
+    func = @gravity_wrapper;
     sol = @(t) compute_planetary_motion(t, V0, orbit_params);
+    sol = @compute_planet_wrapper;
+
 
     % set initial x guess, timestep size, a filter based on the timestep
     % size (for calculating p), and loop iterations
     X0 = sol(t_span(1))';
     e_list = logspace(-13,-1,num_iter);
     e_list = e_list(end:-1:1);
-    h_list = logspace(-5,1,num_iter);
-    h_filter = h_list <= 10 & h_list >= 1e-30;
-    log_h_list = log10(h_list(h_filter))';
     growth_limit = 8;
-
-
+    iter = 0
 
     % Loop through the three RK method
     for j = 1:length(method)
-        iter = 0
         % set up the Butcher tableau corresponding to the current method
         % loop, as well as empty lists for storing data this loop
         [BT_struct,p] = init_BT(method(j));
@@ -79,8 +77,13 @@ function plot_embedded_global_truncation(var_test, t_span, num_iter, h_ref)
             iter = iter + 1
         end
     
+        
+        % filter = init_filter(method, var_test)
+        filter = h_avg_list <= 1e-1 & h_avg_list >= 1e-2;
+        log_h_list = log10(h_avg_list(filter));
+
         % set error as a logs spread
-        log_error = log10(error(h_filter));
+        log_error = log10(error(filter));
 
         % set up the figure
         figure(1)
@@ -88,7 +91,7 @@ function plot_embedded_global_truncation(var_test, t_span, num_iter, h_ref)
         % Calculate p-value, plot a fit line, and plot data for a
         % comparison of error and function count.
         if var_test == "Fun Count"
-            log_evals = log10(fun_count(h_filter));
+            log_evals = log10(fun_count(filter));
             slope = polyfit(log_evals,log_error, 1);
             fit_line = 10.^polyval(slope, log10(h_list));
             p = slope(1)
@@ -111,11 +114,12 @@ function plot_embedded_global_truncation(var_test, t_span, num_iter, h_ref)
         % for a comparison of error and step size.
         elseif var_test == "Step Size"
             slope = polyfit(log_h_list, log_error, 1);
-            % fit_line = 10.^polyval(slope, log10(h_avg_list));
+            fit_line = 10.^polyval(slope, log10(h_avg_list));
             p = slope(1);
-    
-            loglog(h_avg_list, error, '.','MarkerSize',15, 'Color', data_color(j,:),'Displayname',sprintf("Variable Step %s Method",method(j)));
+
+            loglog(h_avg_list, fit_line, '-', 'Linewidth', 7, 'Color', fit_color(j,:), 'Displayname',sprintf("%s Fit",method));
             hold on; % call hold on after calling loglog
+            loglog(h_avg_list, error, '.','MarkerSize',25, 'Color', data_color(j,:),'Displayname',sprintf("Variable Step %s Method",method(j)));
             grid on;
 
             % plot styling
@@ -124,8 +128,8 @@ function plot_embedded_global_truncation(var_test, t_span, num_iter, h_ref)
             xlabel("Average Step Size $h_{avg}$ (-)", 'Interpreter', 'Latex','FontSize',16);
             ylabel("Global Truncation Error $\epsilon$ (-)", 'Interpreter', 'Latex','FontSize',16);
             set(gca,"TickLabelInterpreter",'latex','FontSize',12);
-            fontsize(scale=1.5)
-            % axis([h_avg_list(1) h_avg_list(end) 1e-10 1e5])
+            fontsize(scale=2)
+            axis([1e-4 1e1 1e-12 1e2])
         end 
     end
 end
