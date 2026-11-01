@@ -10,11 +10,12 @@
 % num_iter: the number of iterations/datapoints desired
 %OUTPUTS:
 % None
-function error = plot_global_truncation(run, var_test, error, func, sol, t_span, num_iter)
+function [error,fun_count] = plot_global_truncation(run, var_test, error, fun_count, func, sol, t_span, num_iter)
     arguments
         run (1,:) double = 1
         var_test (1,:) string = "Fun Count"
         error (1,:) double = 0
+        fun_count (1,:) double = 0
         func (1,:) function_handle = @gravity_wrapper
         sol (1,:) function_handle = @compute_planet_wrapper
         t_span (1,:) double = [0, 30]
@@ -39,7 +40,7 @@ function error = plot_global_truncation(run, var_test, error, func, sol, t_span,
     for j = 1:length(method)
         % set up the Butcher tableau corresponding to the curernt method: 
         % BT and filter boundaries
-        [BT_struct,~,bounds] = init_BT(method(j),var_test);
+        [BT_struct,~,bounds] = init_BT(method(j),var_test)
         if run
             % set up empty lists for storing data this loop
             error = zeros(num_iter,1);
@@ -59,23 +60,22 @@ function error = plot_global_truncation(run, var_test, error, func, sol, t_span,
                 iter = iter + 1
             end
         end
-
-        % filter the list of time steps and the list of errors, for
-        % calculating a fit line. set both as a log spread
-        filter = h_list >= bounds(1) & h_list <= bounds(2);
-        log_h_list = log10(h_list(filter));
-        % set error as a log spread
-        log_error = log10(error(filter));
     
         % Calculate p-value, plot a fit line, and plot data for a
         % comparison of error and function count.
         if var_test == "Fun Count"
+            % set up a filter for the linear portion of the method
+            filter = fun_count >= bounds(1) & fun_count <= bounds(2);
+            log_error = log10(error(filter));
             log_evals = log10(fun_count(filter));
+
+            % calculate the p-value (aka the slope) and fit line
             slope = polyfit(log_evals,log_error, 1);
+            fit_line = 10.^polyval(slope, log10(fun_count));
             p = slope(1)
-    
-            fit_line = 10.^polyval(slope, log10(h_list));
-            loglog(h_list, fit_line, '-', 'Linewidth', 7, 'Color', fit_color(j,:), 'Displayname',sprintf("Fixed Step %s Fit",method));
+
+            % plot the data
+            loglog(fun_count, fit_line, '-', 'Linewidth', 7, 'Color', fit_color(j,:), 'Displayname',sprintf("Fixed Step %s Fit",method));
             hold on;
             grid on;
             loglog(fun_count, error, '.', 'MarkerSize',25, 'Color', data_color(j,:),'Displayname',sprintf("Fixed Step %s Data",method));
@@ -92,10 +92,17 @@ function error = plot_global_truncation(run, var_test, error, func, sol, t_span,
         % Alternatively, calculate p-value, plot a fit line, and plot data 
         % for a comparison of error and step size.
         elseif var_test == "Step Size"
+            % set up a filter for the linear portion of the method
+            filter = h_avg_list >= bounds(1) & h_avg_list <= bounds(2);
+            log_error = log10(error(filter));
+            log_h_list = log10(h_avg_list(filter));
+
+            % calculate the p-value (aka the slope) and fit line
             slope = polyfit(log_h_list, log_error, 1);
             fit_line = 10.^polyval(slope, log10(h_list));
             p = slope(1);
     
+            % plot the data
             loglog(h_list, fit_line, '-', 'Linewidth', 7, 'Color', fit_color(j,:), 'Displayname',sprintf("Fixed Step %s Fit",method));
             hold on; % call hold on after calling loglog
             loglog(h_list, error, '.','MarkerSize',25, 'Color', data_color(j,:),'Displayname',sprintf("Fixed Step %s Data",method(j)));

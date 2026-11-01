@@ -83,9 +83,9 @@ function plot_embedded_global_truncation(method, var_test, func, sol, ...
             p = slope(1)
     
             % plot the data
-            loglog(fun_count, fit_line, '-', 'Linewidth', 7, 'Color', fit_color(j,:), 'Displayname',sprintf("%s Fit", method(j)));
+            loglog(fun_count, fit_line, '-', 'Linewidth', 7, 'Color', fit_color(j,:), 'Displayname',sprintf("Adaptive Step %s Fit", method(j)));
             hold on; % call hold on AFTER loglog
-            loglog(fun_count, error, '.', 'MarkerSize',25, 'Color',data_color(j,:),'Displayname',sprintf("%s Data Points",method(j)));
+            loglog(fun_count, error, '.', 'MarkerSize',25, 'Color',data_color(j,:),'Displayname',sprintf("Adaptive Step %s Method",method(j)));
             grid on;
             
             % plot styling
@@ -124,6 +124,32 @@ function plot_embedded_global_truncation(method, var_test, func, sol, ...
             ylabel("Global Truncation Error $\epsilon$ (-)", 'Interpreter', 'Latex','FontSize',16);
             fontsize(scale=2)
             axis([1e-4 1e1 1e-12 1e2])
+
+        elseif var_test == "Failure"
+            % set up a filter for the linear portion of the method
+            filter = h_avg_list >= bounds(1) & h_avg_list <= bounds(2);
+            log_failure = log10(failure_list(filter));
+            log_h_list = log10(h_avg_list(filter));
+
+            % calculate the p-value (aka the slope) and fit line
+            slope = polyfit(log_h_list, log_failure, 1);
+            fit_line = 10.^polyval(slope, log10(h_avg_list));
+            p = slope(1)
+
+            % plot the data
+            loglog(h_avg_list, fit_line, '-', 'Linewidth', 7, 'Color', fit_color(j,:), 'Displayname',sprintf("Adaptive Step %s Fit",method(j)));
+            hold on; % call hold on AFTER loglog
+            loglog(h_avg_list, failure_list, '.','MarkerSize',25, 'Color', data_color(j,:),'Displayname',sprintf("Adaptive Step %s Method",method(j)));
+            grid on;
+
+            % plot styling
+            set(gca,"TickLabelInterpreter",'latex','FontSize',14);
+            title('Runge-Kutta Failure Rate $\epsilon$ vs Timestep $h$', 'Interpreter', 'Latex', 'FontSize',24);
+            legend('Location','northwest', 'Interpreter', 'Latex','FontSize',16);
+            xlabel("Average Step Size $h_{avg}$ (-)", 'Interpreter', 'Latex','FontSize',18);
+            ylabel("Failure Rate ($\frac{Total Step Redos}{Total Step Attempts}$) (-)", 'Interpreter', 'Latex','FontSize',18);
+            fontsize(scale=1.5)
+            axis([1e-2 1e1 1e-5 1e2])
         end 
     end
 end

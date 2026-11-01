@@ -7,6 +7,10 @@
 %tableau: a struct containing the A, B, and C values for the requested
 %         Butcher Tableau
 function [tableau, p, filter] = init_BT(name, var_test)
+    arguments
+        name (1,:) string
+        var_test (1,:) string = "Step Size"
+    end
     tableau = struct();
 
     % fixed-step (non-embedded/non adaptive) BTs:
@@ -58,6 +62,8 @@ function [tableau, p, filter] = init_BT(name, var_test)
             filter = [1e-2, 1e-1];
         elseif var_test == "Fun Count"
             filter = [1e3, 1e4];
+        elseif var_test == "Failure"
+            filter = [0.06, 0.2];
         end
     elseif name == "Fehlberg"
         tableau.C = [0, 1/4, 3/8, 12/13, 1, 1/2];
@@ -74,6 +80,8 @@ function [tableau, p, filter] = init_BT(name, var_test)
             filter = [1e-1, 1e0];
         elseif var_test == "Fun Count"
             filter = [1e3, 1e4];
+        elseif var_test == "Failure"
+            filter = [0.06, 0.2];
         end
     elseif name == "Heun Euler"
         tableau.C = [0,1];
@@ -84,6 +92,8 @@ function [tableau, p, filter] = init_BT(name, var_test)
             filter = [1e-2, 1e-1];
         elseif var_test == "Fun Count"
             filter = [1e3, 1e4];
+        elseif var_test == "Failure"
+            filter = [0.06, 0.2];
         end
     elseif name == "Fehlberg RK1"
         tableau.C = [0,1/2,1];
@@ -94,6 +104,8 @@ function [tableau, p, filter] = init_BT(name, var_test)
             filter = [1e-2, 1e-1];
         elseif var_test == "Fun Count"
             filter = [1e3, 1e4];
+        elseif var_test == "Failure"
+            filter = [0.06, 0.2];
         end
     elseif name == "Bogacki"
         tableau.C = [0,1/2, 3/4, 1];
@@ -104,6 +116,8 @@ function [tableau, p, filter] = init_BT(name, var_test)
             filter = [1e-2, 1e-1];
         elseif var_test == "Fun Count"
             filter = [1e3, 1e4];
+        elseif var_test == "Failure"
+            filter = [0.06, 0.2];
         end
     else
         disp("Not a valid method name.")

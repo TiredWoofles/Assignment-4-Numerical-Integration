@@ -1,5 +1,5 @@
 % Function to plot local truncation error of the two embedded RK method
-% outputs, the difference between these two outputs, 
+% outputs, the difference between these two outputs, and ground truth.
 %INPUTS:
 % func: a function handle that defines a rate function to approximate
 % sol: a function handle that defines the solution of func
