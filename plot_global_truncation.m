@@ -13,7 +13,7 @@
 function [error,fun_count] = plot_global_truncation(run, var_test, error, fun_count, func, sol, t_span, num_iter)
     arguments
         run (1,:) double = 1
-        var_test (1,:) string = "Fun Count"
+        var_test (1,:) string = "Step Size"
         error (1,:) double = 0
         fun_count (1,:) double = 0
         func (1,:) function_handle = @gravity_wrapper
@@ -23,7 +23,7 @@ function [error,fun_count] = plot_global_truncation(run, var_test, error, fun_co
     end
 
     % set methods
-    method = ["Fehlberg"];
+    method = ["Ver der Houwen's Wray's third-order method","Kutta's third order method","Ralston's Method"];
     data_color = [0.65 .25 .10; 0.25 0 0.65; 0.25 0.65 0];
     fit_color = [1 .75 0.55; 0.65 0.35 1; 0.75 1 0];
 
@@ -31,7 +31,7 @@ function [error,fun_count] = plot_global_truncation(run, var_test, error, fun_co
     % size (for calculating p), and loop iterations
     X0 = sol(t_span(1));
     h_list = logspace(-5,1,num_iter);
-    iter = 0
+    iter = 0;
 
     % set up the figure outside of the for-loop & if-statements
     figure(1)
@@ -40,7 +40,7 @@ function [error,fun_count] = plot_global_truncation(run, var_test, error, fun_co
     for j = 1:length(method)
         % set up the Butcher tableau corresponding to the curernt method: 
         % BT and filter boundaries
-        [BT_struct,~,bounds] = init_BT(method(j),var_test)
+        [BT_struct,~,bounds,axis_range] = init_BT(method(j),var_test)
         if run
             % set up empty lists for storing data this loop
             error = zeros(num_iter,1);
@@ -57,7 +57,7 @@ function [error,fun_count] = plot_global_truncation(run, var_test, error, fun_co
                 fun_count(i) = evals;
                 
                 % print iterations for troubleshooting
-                iter = iter + 1
+                iter = iter + 1;
             end
         end
     
@@ -71,51 +71,51 @@ function [error,fun_count] = plot_global_truncation(run, var_test, error, fun_co
 
             % calculate the p-value (aka the slope) and fit line
             slope = polyfit(log_evals,log_error, 1);
-            fit_line = 10.^polyval(slope, log10(fun_count));
+            fit_line = 10.^polyval(slope, log10(fun_count(filter)));
             p = slope(1)
 
             % plot the data
-            loglog(fun_count, fit_line, '-', 'Linewidth', 7, 'Color', fit_color(j,:), 'Displayname',sprintf("Fixed Step %s Fit",method));
+            loglog(fun_count, fit_line, '-', 'Linewidth', 7, 'Color', fit_color(j,:), 'Displayname',sprintf("Fixed Step %s Fit",method(j)));
             hold on;
             grid on;
-            loglog(fun_count, error, '.', 'MarkerSize',25, 'Color', data_color(j,:),'Displayname',sprintf("Fixed Step %s Data",method));
+            loglog(fun_count, error, '.', 'MarkerSize',25, 'Color', data_color(j,:),'Displayname',sprintf("Fixed Step %s Data",method(j)));
             
             % plot styling
             title('Global Truncation Error $\epsilon$ for RK  vs Efficiency', 'Interpreter', 'Latex', 'FontSize',18);
-            legend('Location','northeast', 'Interpreter', 'Latex','FontSize',12);
             xlabel("Number of Rate Function Calls (-)", 'Interpreter', 'Latex','FontSize',16);
             ylabel("Global Truncation Error $\epsilon$ (-)", 'Interpreter', 'Latex','FontSize',16);
             set(gca,"TickLabelInterpreter",'latex');
             fontsize(scale=1.5)
-            axis([3 4e6 1e-10 1e5])
+            axis([axis_range])
     
         % Alternatively, calculate p-value, plot a fit line, and plot data 
         % for a comparison of error and step size.
         elseif var_test == "Step Size"
             % set up a filter for the linear portion of the method
-            filter = h_avg_list >= bounds(1) & h_avg_list <= bounds(2);
+            filter = h_list >= bounds(1) & h_list <= bounds(2);
             log_error = log10(error(filter));
-            log_h_list = log10(h_avg_list(filter));
+            log_h_list = log10(h_list(filter));
 
             % calculate the p-value (aka the slope) and fit line
             slope = polyfit(log_h_list, log_error, 1);
-            fit_line = 10.^polyval(slope, log10(h_list));
-            p = slope(1);
+            h_fit = h_list(filter);
+            fit_line = 10.^polyval(slope, log10(h_fit));
+            p = slope(1)
     
             % plot the data
-            loglog(h_list, fit_line, '-', 'Linewidth', 7, 'Color', fit_color(j,:), 'Displayname',sprintf("Fixed Step %s Fit",method));
+            loglog(h_fit, fit_line, '-', 'Linewidth', 7, 'Color', fit_color(j,:), 'Displayname',sprintf("Fixed Step %s Fit",method(j)));
             hold on; % call hold on after calling loglog
             loglog(h_list, error, '.','MarkerSize',25, 'Color', data_color(j,:),'Displayname',sprintf("Fixed Step %s Data",method(j)));
             grid on;
 
             % plot styling
             title('Global Truncation Error $\epsilon$ for Three RK Methods vs Timestep $h$', 'Interpreter', 'Latex', 'FontSize',18);
-            legend('Location','northwest', 'Interpreter', 'Latex','FontSize',12);
             xlabel("Step size $h$ (-)", 'Interpreter', 'Latex','FontSize',16);
             ylabel("Global Truncation Error $\epsilon$ (-)", 'Interpreter', 'Latex','FontSize',16);
             set(gca,"TickLabelInterpreter",'latex','FontSize',12);
             fontsize(scale=2)
-            axis([h_list(1) h_list(end) 1e-12 1e3])
+            axis([axis_range])
         end 
     end
+    legend('Location','northwest', 'Interpreter', 'Latex','FontSize',10);
 end

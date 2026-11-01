@@ -8,7 +8,7 @@
 function plot_orbit_solution(method)
     % set optional inputs
     arguments
-        method (1,:) string = ["Fourth Order", "Forward Euler", "Explicit Midpoint"]
+        method (1,:) string = ["Ver der Houwen's Wray's third-order method","Kutta's third order method","Ralston's Method"]
     end
 
     % define paramters for the analytical solution:
@@ -103,7 +103,7 @@ function plot_orbit_solution(method)
         plot(0,0,'.w',DisplayName="")
         my_legend = legend();
         my_legend.Layout.Tile = 'south';
-        my_legend.ItemTokenSize(1) = 50;
+        my_legend.ItemTokenSize(1) = 10;
         set(my_legend,"interpreter","latex","Fontsize",16,'Orientation', 'Horizontal');
     end
 end
