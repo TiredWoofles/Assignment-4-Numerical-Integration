@@ -24,8 +24,7 @@ function plot_local_truncation(method, func, sol, t_ref, num_iter)
     %    "$XB1$ Error ($|XB1-X_{true}|$)",...
     %    "$XB2$ Error ($|XB2-X_{true}|$)"];
     data_titles = ["Ground Truth $|X(t+h)-X(t)|$","$X_{diff}$ ($|XB1-XB2|$)",...
-    sprintf("%s: Lower Order Error", method), ...
-    sprintf("%s: Higher Order Error", method)];
+    "Higher Order Error ($|XB1-X_{true}|$)","Lower Order Error ($|XB2-X_{true}|$)"];
 
     % set initial x guess and timestep size
     XA = sol(t_ref);

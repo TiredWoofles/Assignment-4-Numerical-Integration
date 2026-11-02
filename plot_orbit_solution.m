@@ -8,7 +8,7 @@
 function plot_orbit_solution(method)
     % set optional inputs
     arguments
-        method (1,:) string = ["Ver der Houwen's Wray's third-order method","Kutta's third order method","Ralston's Method"]
+        method (1,:) string = ["Van der Houwen's Third-Order","Kutta's Third-Order","Ralston's"]
     end
 
     % define paramters for the analytical solution:

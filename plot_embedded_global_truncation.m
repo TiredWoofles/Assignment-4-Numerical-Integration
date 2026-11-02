@@ -12,16 +12,16 @@
 % growth_limit: the maximum factor that h is allowed to grow by
 %OUTPUTS:
 % None
-function plot_embedded_global_truncation(method, var_test, func, sol, ...
-    t_span, error_span, num_iter, h_ref, growth_limit)
+function plot_embedded_global_truncation(method, var_test, num_iter, func, sol, ...
+    t_span, error_span, h_ref, growth_limit)
     arguments
         method (1,:) string = ["Fehlberg"]
         var_test (1,:) string = "Step Size"
+        num_iter (1,:) double = 50
         func (1,:) function_handle = @gravity_wrapper
         sol (1,:) function_handle = @compute_planet_wrapper
         t_span (1,:) double = [0, 30]
         error_span (1,:) double = [-13, 1]
-        num_iter (1,:) double = 50
         h_ref (1,:) double = 1e-2;
         growth_limit = 8;
     end
@@ -149,7 +149,7 @@ function plot_embedded_global_truncation(method, var_test, func, sol, ...
             xlabel("Average Step Size $h_{avg}$ (-)", 'Interpreter', 'Latex','FontSize',18);
             ylabel("Failure Rate ($\frac{Total Step Redos}{Total Step Attempts}$) (-)", 'Interpreter', 'Latex','FontSize',18);
             fontsize(scale=1.5)
-            axis([1e-2 1e1 1e-5 1e2])
+            axis([1e-2 1e1 1e-4 1e0])
         end 
     end
 end

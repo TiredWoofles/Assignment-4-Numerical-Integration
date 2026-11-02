@@ -10,12 +10,12 @@
 % num_iter: the number of iterations/datapoints desired
 %OUTPUTS:
 % None
-function [error,fun_count] = plot_global_truncation(run, var_test, error, fun_count, func, sol, t_span, num_iter)
+function [error_list,fun_count_list] = plot_global_truncation(run, var_test, error_list, fun_count, func, sol, t_span, num_iter)
     arguments
         run (1,:) double = 1
         var_test (1,:) string = "Step Size"
-        error (1,:) double = 0
-        fun_count (1,:) double = 0
+        error_list (:,3) double = [0,0,0]
+        fun_count (:,3) double = [0,0,0]
         func (1,:) function_handle = @gravity_wrapper
         sol (1,:) function_handle = @compute_planet_wrapper
         t_span (1,:) double = [0, 30]
@@ -23,7 +23,7 @@ function [error,fun_count] = plot_global_truncation(run, var_test, error, fun_co
     end
 
     % set methods
-    method = ["Ver der Houwen's Wray's third-order method","Kutta's third order method","Ralston's Method"];
+    method = ["Van der Houwen's Third-Order","Kutta's Third-Order","Ralston's"];
     data_color = [0.65 .25 .10; 0.25 0 0.65; 0.25 0.65 0];
     fit_color = [1 .75 0.55; 0.65 0.35 1; 0.75 1 0];
 
@@ -36,11 +36,16 @@ function [error,fun_count] = plot_global_truncation(run, var_test, error, fun_co
     % set up the figure outside of the for-loop & if-statements
     figure(1)
 
+    if run
+        error_list = zeros(num_iter,3);
+        fun_count_list = zeros(num_iter,3);
+    end 
+
     % Loop through the three RK methods
     for j = 1:length(method)
         % set up the Butcher tableau corresponding to the curernt method: 
         % BT and filter boundaries
-        [BT_struct,~,bounds,axis_range] = init_BT(method(j),var_test)
+        [BT_struct,~,bounds,axis_range] = init_BT(method(j),var_test);
         if run
             % set up empty lists for storing data this loop
             error = zeros(num_iter,1);
@@ -57,8 +62,11 @@ function [error,fun_count] = plot_global_truncation(run, var_test, error, fun_co
                 fun_count(i) = evals;
                 
                 % print iterations for troubleshooting
-                iter = iter + 1;
+                iter = iter + 1
             end
+            error_list(:,j) = error
+        else
+            error = error_list(:,j);
         end
     
         % Calculate p-value, plot a fit line, and plot data for a
@@ -81,12 +89,14 @@ function [error,fun_count] = plot_global_truncation(run, var_test, error, fun_co
             loglog(fun_count, error, '.', 'MarkerSize',25, 'Color', data_color(j,:),'Displayname',sprintf("Fixed Step %s Data",method(j)));
             
             % plot styling
+            set(gca,"TickLabelInterpreter",'latex');
             title('Global Truncation Error $\epsilon$ for RK  vs Efficiency', 'Interpreter', 'Latex', 'FontSize',18);
+            legend('Location','northwest', 'Interpreter', 'Latex','FontSize',12);
             xlabel("Number of Rate Function Calls (-)", 'Interpreter', 'Latex','FontSize',16);
             ylabel("Global Truncation Error $\epsilon$ (-)", 'Interpreter', 'Latex','FontSize',16);
-            set(gca,"TickLabelInterpreter",'latex');
+            legend('Location','northeast', 'Interpreter', 'Latex','FontSize',10);
             fontsize(scale=1.5)
-            axis([axis_range])
+            axis([10 6e6 18e-10 75])
     
         % Alternatively, calculate p-value, plot a fit line, and plot data 
         % for a comparison of error and step size.
@@ -103,19 +113,19 @@ function [error,fun_count] = plot_global_truncation(run, var_test, error, fun_co
             p = slope(1)
     
             % plot the data
-            loglog(h_fit, fit_line, '-', 'Linewidth', 7, 'Color', fit_color(j,:), 'Displayname',sprintf("Fixed Step %s Fit",method(j)));
+            loglog(h_fit, fit_line, '-', 'Linewidth', 7, 'Color', fit_color(j,:), 'Displayname',sprintf("%s Fit",method(j)));
             hold on; % call hold on after calling loglog
-            loglog(h_list, error, '.','MarkerSize',25, 'Color', data_color(j,:),'Displayname',sprintf("Fixed Step %s Data",method(j)));
+            loglog(h_list, error, '.','MarkerSize',25, 'Color', data_color(j,:),'Displayname',sprintf("%s Data",method(j)));
             grid on;
 
             % plot styling
-            title('Global Truncation Error $\epsilon$ for Three RK Methods vs Timestep $h$', 'Interpreter', 'Latex', 'FontSize',18);
+            set(gca,"TickLabelInterpreter",'latex','FontSize',12);
+            legend('Location','northwest', 'Interpreter', 'Latex','FontSize',12);
+            title('Global Truncation Error $\epsilon$ for Fixed-Step RK Methods vs Timestep $h$', 'Interpreter', 'Latex', 'FontSize',18);
             xlabel("Step size $h$ (-)", 'Interpreter', 'Latex','FontSize',16);
             ylabel("Global Truncation Error $\epsilon$ (-)", 'Interpreter', 'Latex','FontSize',16);
-            set(gca,"TickLabelInterpreter",'latex','FontSize',12);
-            fontsize(scale=2)
-            axis([axis_range])
+            fontsize(scale=1.5)
+            axis([1e-5 10 2e-13 30])
         end 
     end
-    legend('Location','northwest', 'Interpreter', 'Latex','FontSize',10);
 end
