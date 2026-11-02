@@ -29,7 +29,7 @@ function [tableau, p, filter,axis_range] = init_BT(name, var_test)
         tableau.B = [0 1];
         tableau.C = [0; 0.5];
         p = 2;
-    elseif name == "Ralston's Method"
+    elseif name == "Ralston's"
         tableau.A = [0 0; 2/3 0];
         tableau.B = [1/4 3/4];
         tableau.C = [0; 2/3];
@@ -39,9 +39,9 @@ function [tableau, p, filter,axis_range] = init_BT(name, var_test)
             axis_range = [1e-5 10 18e-10 30];
         elseif var_test == "Fun Count"
             filter = [1e3, 1e8]; 
-            axis_range = [10 6e6 18e-10 75]; 
+            axis_range = [10 6e6 18e-10 75];
         end
-    elseif name == "Kutta's third order method"
+    elseif name == "Kutta's Third-Order"
         tableau.A = [0 0 0; 1/3 0 0; 0 2/3 0];
         tableau.B = [1/4 0 3/4];
         tableau.C = [0; 1/3; 2/3];
@@ -50,10 +50,10 @@ function [tableau, p, filter,axis_range] = init_BT(name, var_test)
             filter = [0.0001, 0.8]; 
             axis_range = [1e-5 10 2e-13 30];
         elseif var_test == "Fun Count" 
-            filter = [1e3, 1e8]; %unchanged
-            axis_range = [10 6e6 18e-10 75]; %unchanged
+            filter = [1e3, 1e8]; 
+            axis_range = [10 6e6 18e-10 75]; 
         end
-    elseif name == "Ver der Houwen's Wray's third-order method"
+    elseif name == "Van der Houwen's Third-Order"
         tableau.A = [0 0 0; 8/15 0 0; 1/4 5/12 0];
         tableau.B = [1/4 0 3/4];
         tableau.C = [0; 8/15; 2/3];
